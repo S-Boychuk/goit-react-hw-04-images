@@ -33,7 +33,7 @@ const ImageGallery = ({ searchQuery, images, setImages, page, setPage }) => {
     };
 
     createGallery();
-  }, [searchQuery, page]);
+  }, [searchQuery, page, setImages]);
 
   const getTotalPages = (total, denominator) => {
     const divisible = total % denominator === 0;
@@ -44,11 +44,6 @@ const ImageGallery = ({ searchQuery, images, setImages, page, setPage }) => {
   const updatePage = () => {
     setPage(prevPage => prevPage + 1);
   };
-
-  // const reset = () => {
-  //   setPage(1);
-  //   setImages([]);
-  // };
 
   return (
     images.length !== 0 && (
