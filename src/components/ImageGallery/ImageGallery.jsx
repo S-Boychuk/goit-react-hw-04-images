@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import { useEffect, useState } from 'react';
 import { PropTypes } from 'prop-types';
 import css from './ImageGallery.module.css';
 import { PER_PAGE, getImages } from 'api/PixabayApiService';
@@ -6,100 +6,71 @@ import ImageGalleryItem from 'components/ImageGalleryItem/ImageGalleryItem';
 import Button from 'components/Button/Button';
 import Loader from 'components/Loader/Loader';
 
-class ImageGallery extends Component {
-  state = {
-    images: [],
-    page: 1,
-    showBtn: false,
-    showLoader: false,
-  };
+const ImageGallery = ({ searchQuery, images, setImages, page, setPage }) => {
+  const [status, setStatus] = useState('idle');
 
-  componentDidUpdate(prevProps, prevState) {
-    if (
-      prevProps.searchQuery !== this.props.searchQuery &&
-      this.props.searchQuery.trim()
-    ) {
-      this.resetState();
-      this.createGallery();
+  useEffect(() => {
+    if (!searchQuery) {
       return;
     }
 
-    if (
-      prevProps.searchQuery === this.props.searchQuery &&
-      prevState.page !== this.state.page
-    ) {
-      this.createGallery();
-      return;
-    }
-  }
+    const createGallery = async () => {
+      setStatus('pending');
+      try {
+        const newImages = await getImages(searchQuery, page);
+        const totalPages = getTotalPages(newImages.totalHits, PER_PAGE);
 
-  createGallery = async () => {
-    this.toggleLoader();
-    this.setState({ showBtn: false });
+        if (totalPages > page) {
+          setStatus('loaded');
+        } else {
+          setStatus('endOfPage');
+        }
 
-    try {
-      const newImages = await getImages(
-        this.props.searchQuery,
-        this.state.page
-      );
-
-      const totalPages = this.getTotalPages(newImages.totalHits, PER_PAGE);
-
-      if (totalPages > this.state.page) {
-        this.setState({ showBtn: true });
+        setImages(prevImages => [...prevImages, ...newImages.hits]);
+      } catch (error) {
+        console.log(error);
       }
+    };
 
-      this.setState(({ images }) => ({
-        images: [...images, ...newImages.hits],
-      }));
-    } catch (error) {
-      console.log(error);
-    }
+    createGallery();
+  }, [searchQuery, page]);
 
-    this.toggleLoader();
-  };
-
-  getTotalPages = (total, denominator) => {
+  const getTotalPages = (total, denominator) => {
     const divisible = total % denominator === 0;
     const valueToBeAdded = divisible ? 0 : 1;
     return Math.floor(total / denominator) + valueToBeAdded;
   };
 
-  updatePage = () => {
-    this.setState(({ page }) => ({ page: page + 1 }));
+  const updatePage = () => {
+    setPage(prevPage => prevPage + 1);
   };
 
-  resetState = () => this.setState({ images: [], page: 1 });
+  // const reset = () => {
+  //   setPage(1);
+  //   setImages([]);
+  // };
 
-  toggleLoader = () => {
-    this.setState(({ showLoader }) => ({ showLoader: !showLoader }));
-  };
-
-  render() {
-    return (
-      this.state.images.length !== 0 && (
-        <>
-          <ul className={css.gallery}>
-            {this.state.images.map(
-              ({ id, tags, webformatURL, largeImageURL }) => {
-                return (
-                  <ImageGalleryItem
-                    key={id}
-                    tags={tags}
-                    imageUrl={webformatURL}
-                    largeImageURL={largeImageURL}
-                  />
-                );
-              }
-            )}
-          </ul>
-          {this.state.showBtn && <Button onClick={this.updatePage} />}
-          {this.state.showLoader && <Loader />}
-        </>
-      )
-    );
-  }
-}
+  return (
+    images.length !== 0 && (
+      <>
+        <ul className={css.gallery}>
+          {images.map(({ id, tags, webformatURL, largeImageURL }) => {
+            return (
+              <ImageGalleryItem
+                key={id}
+                tags={tags}
+                imageUrl={webformatURL}
+                largeImageURL={largeImageURL}
+              />
+            );
+          })}
+        </ul>
+        {status === 'loaded' && <Button onClick={updatePage} />}
+        {status === 'pending' && <Loader />}
+      </>
+    )
+  );
+};
 
 ImageGallery.propTypes = {
   searchQuery: PropTypes.string.isRequired,

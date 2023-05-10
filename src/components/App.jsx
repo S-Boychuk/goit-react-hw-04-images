@@ -1,21 +1,30 @@
-import { Component } from 'react';
+import { useState } from 'react';
 import SearchBar from './Searchbar/Searchbar';
 import css from './App.module.css';
 import ImageGallery from './ImageGallery/ImageGallery';
 
-export class App extends Component {
-  state = {
-    searchQuery: '',
+export const App = () => {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [images, setImages] = useState([]);
+  const [page, setPage] = useState(1);
+
+  const reset = () => {
+    setImages([]);
+    setPage(1);
   };
 
-  getSearchQuery = searchQuery => this.setState({ searchQuery });
+  const getSearchQuery = searchQuery => setSearchQuery(searchQuery);
 
-  render() {
-    return (
-      <div className={css.app}>
-        <SearchBar getSearchQuery={this.getSearchQuery}></SearchBar>
-        <ImageGallery searchQuery={this.state.searchQuery}></ImageGallery>
-      </div>
-    );
-  }
-}
+  return (
+    <div className={css.app}>
+      <SearchBar getSearchQuery={getSearchQuery} reset={reset}></SearchBar>
+      <ImageGallery
+        searchQuery={searchQuery}
+        page={page}
+        setPage={setPage}
+        images={images}
+        setImages={setImages}
+      ></ImageGallery>
+    </div>
+  );
+};
