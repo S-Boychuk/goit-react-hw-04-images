@@ -3,6 +3,11 @@ name: Build and deploy to GitHub Pages
 on:
   push:
     branches: [main]
+  workflow_dispatch:
+    inputs:
+      name:
+        description: 'Why do you need to trigger manually?'
+        default: 'Push trigger was failed'
 
 jobs:
   build-and-deploy:
